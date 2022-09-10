@@ -12,7 +12,18 @@ import pynetbox.core.response
 
 
 class NetBoxDNSSource(octodns.provider.base.BaseProvider):
-    """NetBoxDNS source for OctoDNS."""
+    """
+    NetBoxDNS source for OctoDNS.
+    
+    config:
+        # Even if view is not desired for the provider it must still
+        # be present and declared as "none" or empty.
+        view: none
+        # When records sourced from multiple providers, allows provider
+        # to replace entries comming from the previous one.
+        # Implementation matches YamlProvider's 'populate_should_replace'
+        replace_duplicates: False
+    """
 
     SUPPORTS_GEO: bool = False
     SUPPORTS_DYNAMIC: bool = False
@@ -52,10 +63,14 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     _nb_view: pynetbox.core.response.Record | None
     _ttl: int
 
-    def __init__(self, id: int, url: str, token: str, view: str | None, ttl=3600):
+    def __init__(
+        self, id: int, url: str, token: str, view: str | None, ttl=3600, replace_duplicates: bool = False,
+    ):
         """Initialize the NetboxDNSSource."""
-        self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
-        self.log.debug(f"__init__: id={id}, url={url}, view={view}")
+        self._log = logging.getLogger(f"NetboxDNSSource[{id}]")
+        self._log.debug(
+            f"__init__: id={id}, url={url}, view={view}, replace_duplicates={replace_duplicates}"
+        )
         super(NetBoxDNSSource, self).__init__(id)
         self._api = pynetbox.core.api.Api(url, token)
         self._nb_view = None
@@ -65,6 +80,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 raise ValueError
             self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
         self._ttl = ttl
+        self.replace_duplicates = replace_duplicates
 
     def _get_nb_zone(self, name: str) -> pynetbox.core.response.Record:
         """Given a zone name, look it up in NetBox."""
@@ -199,7 +215,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                 source=self,
                 lenient=lenient,
             )
-            zone.add_record(record, lenient=lenient)
+            zone.add_record(record, lenient=lenient, replace=self.replace_duplicates)
 
     def _apply(self, plan: octodns.provider.plan.Plan):
         """Apply the changes to the NetBox DNS zone."""
