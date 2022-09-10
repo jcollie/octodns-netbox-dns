@@ -59,7 +59,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     }
 
     _api: pynetbox.core.api.Api
-    _log: logging.Logger
+    # log: logging.Logger
     _nb_view: pynetbox.core.response.Record | None
     _ttl: int
 
@@ -78,7 +78,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             self._nb_view = self._api.plugins.netbox_dns.views.get(name=view)
             if self._nb_view is None:
                 raise ValueError
-            self._log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
+            self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
 
@@ -96,7 +96,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             view_id=self._nb_view.id, name=name[:-1]
         )
         for nb_zone in nb_zones:
-            self._log.debug(f"{nb_zone.name} {nb_zone.view.id}")
+            self.log.debug(f"{nb_zone.name} {nb_zone.view.id}")
             if nb_zone.name == name[:-1] and nb_zone.view.id == self._nb_view.id:
                 return nb_zone
 
@@ -106,7 +106,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False
     ):
         """Get all of the records of a zone from NetBox and add them to the OctoDNS zone."""
-        self._log.debug(
+        self.log.debug(
             f"populate: name={zone.name}, target={target}, lenient={lenient}"
         )
 
@@ -116,7 +116,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
-            self._log.debug(
+            self.log.debug(
                 f"{nb_record.name!r} {nb_record.type!r} {nb_record.value!r}"
             )
             name = nb_record.name
@@ -183,7 +183,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     }
 
                 case "SOA":
-                    self._log.debug("SOA")
+                    self.log.debug("SOA")
                     continue
 
                 case "SPF" | "TXT":
@@ -219,7 +219,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     def _apply(self, plan: octodns.provider.plan.Plan):
         """Apply the changes to the NetBox DNS zone."""
-        self._log.debug(
+        self.log.debug(
             f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}"
         )
 
@@ -250,7 +250,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                             value=value,
                             disable_ptr=True,
                         )
-                        self._log.debug(f"{nb_record!r}")
+                        self.log.debug(f"{nb_record!r}")
 
                 case octodns.record.Delete():
                     name = change.existing.name
@@ -276,10 +276,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
                     for nb_record in nb_records:
                         for value in existing:
                             if nb_record.value == value:
-                                self._log.debug(
+                                self.log.debug(
                                     f"{nb_record.id} {nb_record.name} {nb_record.type} {nb_record.value} {value}"
                                 )
-                                self._log.debug(
+                                self.log.debug(
                                     f"{nb_record.url} {nb_record.endpoint.url}"
                                 )
                                 nb_record.delete()
