@@ -67,8 +67,8 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self, id: int, url: str, token: str, view: str | None, ttl=3600, replace_duplicates: bool = False,
     ):
         """Initialize the NetboxDNSSource."""
-        self._log = logging.getLogger(f"NetboxDNSSource[{id}]")
-        self._log.debug(
+        self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
+        self.log.debug(
             f"__init__: id={id}, url={url}, view={view}, replace_duplicates={replace_duplicates}"
         )
         super(NetBoxDNSSource, self).__init__(id)
