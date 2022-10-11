@@ -8,7 +8,7 @@ import octodns.provider.plan
 import octodns.record
 import octodns.zone
 import pynetbox.core.api
-import pynetbox.core.response
+import pynetbox.core.response as pynb_resp
 
 
 class NetBoxDNSSource(octodns.provider.base.BaseProvider):
@@ -60,7 +60,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
     _api: pynetbox.core.api.Api
     # log: logging.Logger
-    _nb_view: pynetbox.core.response.Record | None
+    _nb_view: pynb_resp.Record | None
     _ttl: int
 
     def __init__(
@@ -82,10 +82,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
 
-    def _get_nb_zone(self, name: str, view: str | None) -> pynetbox.core.response.Record:
+    def _get_nb_zone(self, name: str, view: pynb_resp.Record | None) -> pynb_resp.Record:
         """Given a zone name and a view name, look it up in NetBox.
            Raises: pynetbox.RequestError if declared view is not existant"""
-        view_name = "null" if not view else view
+        view_name = "null" if not view else view.name
         nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view=view_name)
         
         return nb_zone
@@ -100,7 +100,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
         records = {}
 
-        nb_zone = self._get_nb_zone(zone.name, view=self._nb_view.name)
+        nb_zone = self._get_nb_zone(zone.name, view=self._nb_view)
 
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
@@ -211,7 +211,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}"
         )
 
-        nb_zone = self._get_nb_zone(plan.desired.name, view=self._nb_view.name)
+        nb_zone = self._get_nb_zone(plan.desired.name, view=self._nb_view)
 
         for change in plan.changes:
             match change:
