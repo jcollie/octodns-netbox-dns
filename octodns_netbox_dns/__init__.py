@@ -82,25 +82,13 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
 
-    def _get_nb_zone(self, name: str) -> pynetbox.core.response.Record:
-        """Given a zone name, look it up in NetBox."""
-        if self._nb_view is None:
-            nb_zones = self._api.plugins.netbox_dns.zones.filter(name=name[:-1])
-            if len(nb_zones) > 1:
-                raise ValueError
-            if len(nb_zones) == 0:
-                raise ValueError
-            return next(nb_zones)
-
-        nb_zones = self._api.plugins.netbox_dns.zones.filter(
-            view_id=self._nb_view.id, name=name[:-1]
-        )
-        for nb_zone in nb_zones:
-            self.log.debug(f"{nb_zone.name} {nb_zone.view.id}")
-            if nb_zone.name == name[:-1] and nb_zone.view.id == self._nb_view.id:
-                return nb_zone
-
-        raise ValueError
+    def _get_nb_zone(self, name: str, view: str) -> pynetbox.core.response.Record:
+        """Given a zone name, look it up in NetBox.
+           Raises: pynetbox.RequestError if declared view is not existant"""
+        view_name = "null" if not view else view.name
+        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view=view_name)
+        
+        return nb_zone
 
     def populate(
         self, zone: octodns.zone.Zone, target: bool = False, lenient: bool = False
@@ -112,7 +100,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
 
         records = {}
 
-        nb_zone = self._get_nb_zone(zone.name)
+        nb_zone = self._get_nb_zone(zone.name, view=self._nb_view)
 
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
@@ -223,7 +211,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             f"_apply: zone={plan.desired.name}, len(changes)={len(plan.changes)}"
         )
 
-        nb_zone = self._get_nb_zone(plan.desired.name)
+        nb_zone = self._get_nb_zone(plan.desired.name, view=self._nb_view)
 
         for change in plan.changes:
             match change:
