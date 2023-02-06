@@ -86,7 +86,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         """Given a zone name and a view name, look it up in NetBox.
            Raises: pynetbox.RequestError if declared view is not existant"""
         view = "null" if not view else view
-        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view=view)
+        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view_id=view.id)
         
         return nb_zone
 
@@ -110,10 +110,18 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             name = nb_record.name
             if name == "@":
                 name = ""
+
+            nb_zone_default_ttl = nb_zone.default_ttl
+            if nb_record.ttl:
+                nb_ttl = nb_record.ttl
+            elif nb_record.type == "NS":
+                nb_ttl = nb_zone.soa_refresh
+            else:
+                nb_ttl = nb_zone_default_ttl
             data = {
                 "name": name,
                 "type": nb_record.type,
-                "ttl": nb_record.ttl,
+                "ttl": nb_ttl,
                 "values": [],
             }
             rdata = dns.rdata.from_text("IN", nb_record.type, nb_record.value)

@@ -8,13 +8,7 @@ authors = ["Jeffrey C. Ollie <jeff@ocjtech.us>"]
 python = "^3.10"
 octodns = "^0.9.17"
 
-# There's a bug in pynetbox that prevents update & delete operations on plugin REST API endpoints.
-# Until pull request #426 is merged I recommend using my fork of pynetbox which has #426 applied to
-# the version 6.6.2 of pynetbox (the original pull request is against an older version).
-#
-# pynetbox = "^6.6.2"
-#
-pynetbox = { git = "https://github.com/jcollie/pynetbox.git", rev = "35449e0e87105d9a6170bcc333d6a1882c945cd0" }
+pynetbox = "^7.0.1"
 
 dnspython = "^2.2.1"
 
