@@ -110,10 +110,18 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
             name = nb_record.name
             if name == "@":
                 name = ""
+
+            nb_zone_default_ttl = nb_zone.default_ttl
+            if nb_record.ttl:
+                nb_ttl = nb_record.ttl
+            elif nb_record.type == "NS":
+                nb_ttl = nb_zone.soa_refresh
+            else:
+                nb_ttl = nb_zone_default_ttl
             data = {
                 "name": name,
                 "type": nb_record.type,
-                "ttl": nb_record.ttl,
+                "ttl": nb_ttl,
                 "values": [],
             }
             rdata = dns.rdata.from_text("IN", nb_record.type, nb_record.value)
