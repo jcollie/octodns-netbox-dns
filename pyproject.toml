@@ -8,7 +8,8 @@ authors = ["Jeffrey C. Ollie <jeff@ocjtech.us>"]
 python = "^3.10"
 octodns = "^0.9.17"
 
-pynetbox = "^7.0.1"
+# use fork of pynetbox until pkg_resources runtime dependency is removed
+pynetbox = { git = "https://github.com/jcollie/pynetbox", rev = "f051085a4051a98565c08b9646d5b2d69fe1739e" }
 
 dnspython = "^2.2.1"
 
