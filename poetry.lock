@@ -196,7 +196,7 @@ dev = ["black (>=22.3.0)", "build (>=0.7.0)", "pycountry (>=19.8.18)", "pycountr
 
 [[package]]
 name = "pynetbox"
-version = "6.6.3.dev25+gf051085"
+version = "7.0.2.dev1+gf051085"
 description = "NetBox API client library"
 category = "main"
 optional = false
