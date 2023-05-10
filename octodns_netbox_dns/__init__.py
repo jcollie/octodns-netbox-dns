@@ -203,7 +203,6 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         for data in records.values():
             if len(data["values"]) == 1:
                 data["value"] = data.pop("values")[0]
-            pprint(data)
             record = octodns.record.Record.new(
                 zone=zone,
                 name=data["name"],
