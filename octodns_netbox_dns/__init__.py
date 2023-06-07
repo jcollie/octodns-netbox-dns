@@ -16,9 +16,9 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     NetBoxDNS source for OctoDNS.
     
     config:
-        # Even if view is not desired for the provider it must still
-        # be present and declared as "none" or empty.
-        view: none
+        # Provider 'view' configuration is optional; however, it still can
+        # be declared as "null" or with an empty value. 
+        view: null
         # When records sourced from multiple providers, allows provider
         # to replace entries comming from the previous one.
         # Implementation matches YamlProvider's 'populate_should_replace'
@@ -64,7 +64,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     _ttl: int
 
     def __init__(
-        self, id: int, url: str, token: str, view: str | None, ttl=3600, replace_duplicates: bool = False,
+        self, id: int, url: str, token: str, view: str = None, ttl=3600, replace_duplicates: bool = False,
     ):
         """Initialize the NetboxDNSSource."""
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
@@ -77,7 +77,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         if view is not None:
             self._nb_view = self._api.plugins.netbox_dns.views.get(name=view)
             if self._nb_view is None:
-                raise ValueError
+                raise ValueError(f"dns view: '{view}' has not been found")
             self.log.debug(f"found {self._nb_view.name} {self._nb_view.id}")
         self._ttl = ttl
         self.replace_duplicates = replace_duplicates
@@ -85,9 +85,9 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     def _get_nb_zone(self, name: str, view: pynb_resp.Record | None) -> pynb_resp.Record:
         """Given a zone name and a view name, look it up in NetBox.
            Raises: pynetbox.RequestError if declared view is not existant"""
-        view = "null" if not view else view
-        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view_id=view.id)
-        
+        view_id = view.id if view else "null"
+        nb_zone = self._api.plugins.netbox_dns.zones.get(name=name[:-1], view_id=view_id)
+
         return nb_zone
 
     def populate(
@@ -101,7 +101,10 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
         records = {}
 
         nb_zone = self._get_nb_zone(zone.name, view=self._nb_view)
-
+        if not nb_zone:
+            self.log.error(f"Zone '{zone.name[:-1]}' not found in view: '{self._nb_view}'")
+            raise LookupError
+        
         nb_records = self._api.plugins.netbox_dns.records.filter(zone_id=nb_zone.id)
         for nb_record in nb_records:
             self.log.debug(
