@@ -64,7 +64,7 @@ class NetBoxDNSSource(octodns.provider.base.BaseProvider):
     _ttl: int
 
     def __init__(
-        self, id: int, url: str, token: str, view: str = None, ttl=3600, replace_duplicates: bool = False,
+        self, id: int, url: str, token: str, view: str | None = None, ttl=3600, replace_duplicates: bool = False,
     ):
         """Initialize the NetboxDNSSource."""
         self.log = logging.getLogger(f"NetboxDNSSource[{id}]")
